@@ -98,6 +98,7 @@ MODEL_COSTS = {
     "antigravity-claude-sonnet-4-5-thinking": {"input": 3, "output": 15},
     "claude-sonnet-4-5": {"input": 3, "output": 15},
     "claude-sonnet-4-5-thinking": {"input": 3, "output": 15},
+    "claude-haiku-4-5": {"input": 1, "output": 5},
     "antigravity-gemini-3-flash": {"input": 0.5, "output": 3},
     "gemini-3-flash": {"input": 0.5, "output": 3},
     "antigravity-gemini-3-pro-low": {"input": 2, "output": 12},
@@ -118,6 +119,7 @@ def calculate_cost(model, input_tokens, output_tokens):
         elif "gemini-3-pro" in model_lower: costs = {"input": 2, "output": 12}
         elif "gemini-3-flash" in model_lower: costs = {"input": 0.5, "output": 3}
         elif "claude-opus" in model_lower: costs = {"input": 5, "output": 25}
+        elif "claude-haiku" in model_lower: costs = {"input": 1, "output": 5}
         elif "claude-sonnet" in model_lower: costs = {"input": 3, "output": 15}
         elif "glm-4" in model_lower: costs = {"input": 0.43, "output": 2.2}
             
