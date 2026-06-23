@@ -1,5 +1,6 @@
 {
   "claude-haiku-4.5": {
+    "cache": 0.1,
     "input": 1,
     "output": 5
   },
@@ -12,6 +13,7 @@
     "output": 25
   },
   "claude-sonnet-4.5": {
+    "cache": 0.3,
     "input": 3,
     "output": 15
   },
@@ -20,7 +22,7 @@
     "output": 10
   },
   "deepseek-v4-flash": {
-    "cache": 0.028,
+    "cache": 0.003,
     "input": 0.14,
     "output": 0.28
   },
@@ -28,6 +30,11 @@
     "cache": 0.0037,
     "input": 0.435,
     "output": 0.87
+  },
+  "deepseek-v3.2": {
+    "cache": 0.13,
+    "input": 0.26,
+    "output": 0.38
   },
   "gemini-3-flash": {
     "input": 0.5,
@@ -46,10 +53,19 @@
     "input": 0.25,
     "output": 1.5
   },
+  "gemini-3.1-flash": {
+    "cache": 0.025,
+    "input": 0.25,
+    "output": 1.5
+  },
   "gemini-3.1-pro": {
     "cache": 0.2,
     "input": 2,
     "output": 12
+  },
+  "gemma-4-26b": {
+    "input": 0.15,
+    "output": 0.6
   },
   "gemma-4-31b": {
     "input": 0.15,
@@ -114,6 +130,11 @@
     "input": 0.5,
     "output": 2.6
   },
+  "ling-2.6-lt": {
+    "cache": 0.015,
+    "input": 0.075,
+    "output": 0.625
+  },
   "mimo-v2-pro": {
     "input": 1,
     "output": 3
@@ -137,6 +158,11 @@
     "input": 0.3,
     "output": 1.2
   },
+  "nemotron-3-ultra": {
+    "cache": 0.1,
+    "input": 0.5,
+    "output": 2.2
+  },
   "nex-agi/nex-n2": {
     "cache": 0.025,
     "input": 0.25,
@@ -151,6 +177,11 @@
     "cache": 0.02,
     "input": 0.1,
     "output": 0.3
+  },
+  "step-3.7-flash": {
+    "cache": 0.04,
+    "input": 0.2,
+    "output": 1.15
   },
   "trinity-large-preview": {
     "input": 0.25,

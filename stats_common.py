@@ -225,11 +225,19 @@ def normalize_model_name(model):
         "antigravity-",
         "z-ai/",
         "deepseek/",
+        "deepseek-ai/",
         "google/",
         "anthropic/",
         "openai/",
         "moonshot/",
         "openrouter/",
+        "arcee-ai/",
+        "minimax/",
+        "nvidia/",
+        "qwen/",
+        "stepfun/",
+        "xiaomi/",
+        "zai-org/",
     ]:
         model_lower = model_lower.replace(prefix, "")
 
@@ -252,9 +260,6 @@ def normalize_model_name(model):
         "-medium",
         "-minimal",
         "-free",
-        "-preview",
-        "-pro",
-        "-lite",
         ":free",
         ":pro",
         ":lite",
@@ -263,78 +268,10 @@ def normalize_model_name(model):
     for suffix in suffixes:
         model_lower = model_lower.replace(suffix, "")
 
-    # Verificar primero en MODEL_ALIASES (compatibilidad hacia atras)
     if model in MODEL_ALIASES:
         return MODEL_ALIASES[model]
     if model_lower in MODEL_ALIASES:
         return MODEL_ALIASES[model_lower]
-
-    # Patrones especificos con version
-    # Claude (versiones explicitas)
-    if "claude-opus-4.6" in model_lower:
-        return "claude-opus-4.6"
-    elif "claude-opus-4.5" in model_lower:
-        return "claude-opus-4.5"
-    elif "claude-sonnet-4.5" in model_lower:
-        return "claude-sonnet-4.5"
-    elif "claude-haiku-4.5" in model_lower:
-        return "claude-haiku-4.5"
-
-    # Gemini (versiones explicitas)
-    elif "gemini-3.1-pro" in model_lower:
-        return "gemini-3.1-pro"
-    elif "gemini-3.1-flash" in model_lower:
-        return "gemini-3.1-flash"
-    elif "gemini-3-pro" in model_lower:
-        return "gemini-3-pro"
-    elif "gemini-3-flash" in model_lower:
-        return "gemini-3-flash"
-
-    # GLM (versiones explicitas)
-    elif model_lower.startswith("glm-5."):
-        return "glm-5.1"
-    elif model_lower == "glm-5":
-        return "glm-5"
-    elif "glm-4.7" in model_lower or "glm-4" in model_lower:
-        return "glm-4.7-free"
-
-    # Otros (versiones explicitas)
-    elif "gemma-4-31b" in model_lower:
-        return "gemma-4-31b"
-    elif "kimi-k2.5" in model_lower:
-        return "kimi-k2.5"
-    elif "minimax-m2.7" in model_lower:
-        return "minimax-m2.7"
-    elif "minimax-m2.5" in model_lower:
-        return "minimax-m2.5"
-    elif "minimax-m2.1" in model_lower:
-        return "minimax-m2.1"
-    elif "trinity-large-preview" in model_lower:
-        return "trinity-large-preview"
-    elif "gpt-5.3-codex" in model_lower:
-        return "gpt-5.3-codex"
-    elif "gpt-5.2-codex" in model_lower:
-        return "gpt-5.2-codex"
-    elif "gpt-5.2" in model_lower:
-        return "gpt-5.2"
-    elif "gpt-5.4" in model_lower:
-        return "gpt-5.4"
-    elif "gpt-5.1-codex-max" in model_lower or "codex-max" in model_lower:
-        return "gpt-5.1-codex-max"
-    elif "gpt-5-mini" in model_lower:
-        return "gpt-5-mini"
-    elif "grok-code" in model_lower or "grok-4.1-fast" in model_lower:
-        return "grok-code"
-    elif "deepseek-v4-pro" in model_lower:
-        return "deepseek-v4-pro"
-    elif "deepseek-v4-flash" in model_lower or "deepseek-v4" in model_lower:
-        return "deepseek-v4-flash"
-    elif "step-3.5-flash" in model_lower:
-        return "step-3.5-flash"
-    elif "mimo-v2" in model_lower:
-        return "mimo-v2-pro"
-    elif "qwen3.6-plus" in model_lower:
-        return "qwen3.6-plus"
 
     return model_lower
 
