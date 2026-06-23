@@ -11,6 +11,7 @@ COSTS_FILE = SCRIPT_DIR / "model_costs.json"
 ALIASES_FILE = SCRIPT_DIR / "model_aliases.json"
 HISTORY_FILE = SCRIPT_DIR / "session_history.json"
 BACKUP_DIR = SCRIPT_DIR / "model_backups"
+PROTECTED_ALIASES = {"historical_adjustment"}
 
 
 def backup():
@@ -178,6 +179,10 @@ def edit_model(costs, aliases):
     save_json(COSTS_FILE, costs)
     print(f"  ✓ '{name}' actualizado.")
 
+    # Ofrecer recalcular histórico si el precio cambió
+    if (inp != current['input'] or out != current['output'] or cache != current.get('cache')):
+        ask_recalculate()
+
 
 def delete_model(costs, aliases):
     """Borra un modelo."""
@@ -292,6 +297,9 @@ def remove_alias(aliases):
         return
 
     alias = items[idx-1][0]
+    if alias in PROTECTED_ALIASES:
+        print(f"  ⚠ '{alias}' está protegido, no se puede borrar.")
+        return
     del aliases[alias]
     save_json(ALIASES_FILE, aliases)
     print(f"  ✓ Alias '{alias}' borrado.")
@@ -317,6 +325,8 @@ def alias_menu(costs, aliases):
         elif opt == '4':
             cleaned = 0
             for k in list(aliases):
+                if k in PROTECTED_ALIASES:
+                    continue
                 if aliases[k] not in costs:
                     del aliases[k]
                     cleaned += 1
@@ -440,6 +450,55 @@ def search_models(costs, aliases):
         print(f"  {pad(name, 40)} {inp:>8s} {out:>8s} {cache:>8s} {kind}")
 
 
+# ─── Recalcular histórico ──────────────────────────────
+
+def recalculate_history_costs():
+    """Recalcula costos de todas las sesiones en session_history.json usando precios actuales."""
+    if not HISTORY_FILE.exists():
+        print("  No hay historial para recalcular.")
+        return
+
+    sys.path.insert(0, str(SCRIPT_DIR))
+    from stats_common import normalize_model_name, calculate_cost
+
+    history = load_json(HISTORY_FILE, {})
+    session_keys = [k for k in history if k != "historical_total"]
+    updated = 0
+
+    for key in session_keys:
+        session = history[key]
+        by_model = session.get("by_model", {})
+        for model, mdata in by_model.items():
+            old_cost = mdata.get("cost", 0)
+            new_cost = calculate_cost(
+                model,
+                mdata.get("input", 0),
+                mdata.get("output", 0),
+                mdata.get("cache", 0),
+            )
+            if abs(new_cost - old_cost) > 0.0001:
+                mdata["cost"] = new_cost
+                updated += 1
+
+    if updated:
+        save_json(HISTORY_FILE, history)
+        print(f"  ✓ Recalculados {updated} costos en {len(session_keys)} sesiones.")
+    else:
+        print("  ✓ Sin cambios (todos los costos ya coinciden).")
+
+    return history
+
+
+def ask_recalculate():
+    """Pregunta si se quiere recalcular el histórico tras cambiar un precio."""
+    print()
+    r = input("  ¿Recalcular costos del histórico con el nuevo precio? [s/N]: ").strip().lower()
+    if r in ('s', 'si', 'sí', 'y', 'yes'):
+        recalculate_history_costs()
+    else:
+        print("  El precio se aplica solo de ahora en adelante. Usá 'R' en menú principal para recalcular después.")
+
+
 # ─── Main ──────────────────────────────────────────────
 
 def main():
@@ -458,6 +517,7 @@ def main():
         print(f"│  6. Buscar modelo{'':>35s}│")
         print(f"│  7. Modelos sin precio (huérfanos){'':>17s}│")
         print(f"│  8. Modelos sin uso{'':>33s}│")
+        print(f"│  R. Recalcular costos históricos{'':>19s}│")
         print(f"│  0. Salir{'':>43s}│")
         print(f"└──────────────────────────────────────────────────┘")
         opt = input("  > ").strip()
@@ -485,6 +545,8 @@ def main():
             costs = load_json(COSTS_FILE, {})
         elif opt == '8':
             find_unused(costs)
+        elif opt.upper() == 'R':
+            recalculate_history_costs()
         elif opt == '0':
             print()
             break

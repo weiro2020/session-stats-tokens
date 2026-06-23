@@ -206,6 +206,9 @@ def _load_model_overrides():
         except Exception:
             pass
 
+    # Alias protegidos: siempre presentes, nunca en JSON
+    MODEL_ALIASES["historical_adjustment"] = "historical_adjustment"
+
 
 _load_model_overrides()
 
