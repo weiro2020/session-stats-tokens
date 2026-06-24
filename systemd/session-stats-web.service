@@ -1,0 +1,24 @@
+[Unit]
+Description=session-stats web dashboard (stats.dev0p.com)
+After=network.target
+
+[Service]
+Type=simple
+User=capw
+Group=capw
+WorkingDirectory=/home/capw/scripts/session-stats/stats-web
+Environment="PATH=/home/capw/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/python3 -m uvicorn main:app --host 127.0.0.1 --port 8091 --log-level info
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/var/log/session-stats-web.log
+StandardError=append:/var/log/session-stats-web.err.log
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=
+
+[Install]
+WantedBy=multi-user.target

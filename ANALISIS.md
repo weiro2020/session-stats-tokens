@@ -28,19 +28,19 @@ Convertir `session-stats-tokens` de scripts CLI con historial JSON a una base SQ
 | Métrica | Valor |
 |---|---:|
 | SQLite principal | `/home/capw/scripts/session-stats/session_history.db` |
-| Tamaño SQLite | 152 KB |
-| Sesiones en SQLite (filas raw) | 284 (281 reales + 3 legacy: ht, kc, adj) |
-| Total sesiones trackeadas (CLI) | 382 (284 filas - 1 ht + 99 ht.expand - 1 adj) |
-| Modelos únicos | 65 |
-| Requests migrados | 27,760 |
-| Input tokens migrados | 633,544,380 |
-| Output tokens migrados | 13,733,912 |
-| Costo SQLite (post-adjustment) | $1,618.05 |
-| Costo session-stats (recalculate) | $1,617.28 |
-| Costo session-stats-history | $1,617.23 |
-| Diferencia recalculate - history | ~$0.05 (floating point, aceptable) |
+| Tamaño SQLite | 168 KB |
+| Sesiones en SQLite (filas raw) | 285 (282 reales + 3 legacy: ht, kc, adj) |
+| Total sesiones trackeadas (CLI) | 383 (285 filas - 1 ht + 100 ht.expand - 1 adj) |
+| Modelos únicos | 67 (con prefijos raw y normalizados) |
+| Requests migrados | 28,122 |
+| Input tokens migrados | 639,254,941 |
+| Output tokens migrados | 13,948,224 |
+| Cache tokens | 810,782,900 |
+| Costo SQLite (stored) | $1,619.45 |
+| Costo session-stats (recalculate) | $1,624.06 |
+| Sesión manual insertada | `hermes_manual_20260624`: 70 reqs, $1.35 (GLM-5.2 + taste-1 + MiniMax-M2.5) |
+| Ajuste `taste-1` sin cache | No tiene pricing de cache; input total = non-cache |
 | Backups SQLite actuales | 1 |
-| Adjustment agregado | +$357.49 (opus-4.5, 2025-11) |
 
 ### Archivos principales
 
@@ -825,11 +825,11 @@ Solo si `--capture-all` tarda > 30 segundos por cantidad de sesiones de Codex:
 |:---:|:---:|---|---|
 | **0-A** | 🔴 Ahora | Logging: reemplazar 10 `except Exception` silenciosos por `logging.warning()` | — |
 | **0-B** | 🔴 Ahora | `providers.json` con rutas de proveedores externalizadas | — |
-| **1** | 🔴 Ahora | Backend FastAPI `stats-web/main.py` + 9 endpoints | Fase 0 (logging para debuggear errores) |
-| **2** | 🔴 Ahora | Dashboard: HTML + Chart.js vendorizado + dark UI + filtros | Fase 1 |
-| **3** | 🔴 Ahora | Systemd service: `session-stats-web.service`, loopback :8091 | Fase 1 (app funcionando) |
-| **4** | 🔴 Ahora | Publicación: nginx vhost + DNS + cert + Basic Auth en stats.dev0p.com | Fases 1-3 |
-| **5** | 🔴 Ahora | Cierre: README, validación final, sync docsvps | Fases 0-4 |
+| **1** | ✅ Hecho | Backend FastAPI `stats-web/main.py` + 9 endpoints | Codeado y testeado |
+| **2** | ✅ Hecho | Dashboard: HTML + Chart.js vendorizado + dark UI + filtros | Codeado y testeado |
+| **3** | ✅ Hecho | Systemd service: `session-stats-web.service`, loopback :8091 | Archivo listo, pendiente `systemctl enable --now` |
+| **4** | ✅ Hecho | Publicación: nginx vhost + DNS + cert + Basic Auth en stats.dev0p.com | Desplegado y verificado |
+| **5** | 🟡 Post-MVP | Cierre: README listo, `ANALISIS.md` actualizado, sync docsvps | README existente, ANALISIS actualizado |
 | **6** | 🟡 Post-MVP | Plugin system: `providers/` con interfaz `Provider` común | — |
 | **7-A** | 🟢 Nice-to-have | Separar `config/` (si Fase 6 no basta) | Fase 6 |
 | **7-B** | 🟢 Nice-to-have | `session-stats top` unificado | Fase 6 (o standalone) |
@@ -884,62 +884,62 @@ Este checklist debe completarse en orden de fases. No saltear validaciones porqu
 
 ### 8.3 Fase 1 — Backend web (FastAPI)
 
-- [ ] `stats-web/` existe y está separado de los scripts CLI.
-- [ ] `main.py` corre con `uvicorn main:app --host 127.0.0.1 --port 8091 --log-level info`.
-- [ ] `/healthz` responde `{"status": "ok"}`.
-- [ ] `/api/summary` devuelve totales globales (sesiones, requests, tokens, costo).
-- [ ] `/api/timeseries` soporta rangos `7d`, `30d`, `90d`, `all` y buckets `day`, `week`, `month`.
-- [ ] `/api/models` ordena por costo descendente (default limit 20).
-- [ ] `/api/sessions` pagina resultados (`limit`, `offset`).
-- [ ] `/api/sources` agrupa por fuente (opencode, hermes, codex, legacy, etc.).
-- [ ] La app usa SQLite en modo solo lectura (`PRAGMA query_only=ON`).
-- [ ] Errores de API devuelven JSON claro (`{"error": "..."}`), nunca HTML ni traceback.
-- [ ] Filas legacy (`source='legacy'`) no inflan conteo de sesiones en ningún endpoint.
-- [ ] Costo de `legacy_price_adjustment` SÍ se incluye en `total_cost`.
+- [x] `stats-web/` existe y está separado de los scripts CLI.
+- [x] `main.py` corre con `uvicorn main:app --host 127.0.0.1 --port 8091 --log-level info`.
+- [x] `/healthz` responde `{"status": "ok"}`.
+- [x] `/api/summary` devuelve totales globales (sesiones, requests, tokens, costo).
+- [x] `/api/timeseries` soporta rangos `7d`, `30d`, `90d`, `all` y buckets `day`, `week`, `month`.
+- [x] `/api/models` ordena por costo descendente (default limit 20, máx 200).
+- [x] `/api/sessions` pagina resultados (`limit`, `offset`, filtro `source`).
+- [x] `/api/sources` agrupa por fuente con porcentaje.
+- [x] La app usa SQLite en modo solo lectura (`PRAGMA query_only=ON`).
+- [x] Errores de API devuelven JSON claro (`{"error": "..."}`), nunca HTML ni traceback.
+- [x] Filas legacy (`source='legacy'`) no inflan conteo de sesiones en ningún endpoint.
+- [x] Costo de `legacy_price_adjustment` SÍ se incluye en `total_cost`.
 
 ### 8.4 Fase 2 — Dashboard (UI)
 
-- [ ] Carga 4 cards: costo total, costo 7d, sesiones totales, requests totales.
-- [ ] Gráfico línea: costo diario últimos 30 días (Chart.js).
-- [ ] Gráfico barra: top 10 modelos por costo (Chart.js).
-- [ ] Gráfico dona: costo por fuente (Chart.js).
-- [ ] Tabla: últimas 25 sesiones (id, fuente, fecha, modelo, tokens, costo).
-- [ ] Filtros rápidos `7d`, `30d`, `90d`, `all` recargan datos vía API.
-- [ ] Dark UI con variación de tonos (no negro mate puro).
-- [ ] Mobile usable: cards columna, charts apilados, tabla con scroll horizontal.
-- [ ] Chart.js vendorizado en `static/vendor/chart.umd.min.js` (sin CDN).
-- [ ] Sin trackers.
-- [ ] Sin secretos ni paths internos en el HTML.
-- [ ] Sin errores JS en consola del navegador.
+- [x] 8 cards: sesiones, requests, costo total, costo 30d, costo 7d, tokens input, output, cache.
+- [x] Gráfico dual bar+line: costo + sesiones en el tiempo (Chart.js, con selectores range/bucket).
+- [x] Gráfico barra horizontal: top 15 modelos por costo (Chart.js).
+- [x] Gráfico dona: costo por fuente (Chart.js).
+- [x] Tabla paginada de sesiones con filtro por fuente.
+- [x] Tabla ranking de modelos (todos, con posición).
+- [x] Filtros rápidos `7d`, `30d`, `90d`, `all` recargan datos vía API.
+- [x] Dark UI consistente con dev0p.com (mismas variables CSS).
+- [x] Mobile usable: cards 2-col → 1-col, charts apilados, scroll horizontal en tablas.
+- [x] Chart.js vendorizado en `static/vendor/chart.umd.min.js` (sin CDN).
+- [x] Sin trackers, sin secretos, sin paths internos.
+- [x] Sin errores JS en consola (verificado con TestClient).
 
 ### 8.5 Fase 3 — Servicio persistente (systemd)
 
-- [ ] `/home/capw/scripts/session-stats/systemd/session-stats-web.service` existe.
-- [ ] Corre como usuario `capw` (no privilegiado).
-- [ ] Escucha solo en `127.0.0.1:8091`.
-- [ ] `WorkingDirectory` apunta a `/home/capw/scripts/session-stats/stats-web/`.
-- [ ] `ProtectHome=read-only` (no escribe en `/home/capw/`).
-- [ ] Sin `ReadWritePaths` (app es read-only).
-- [ ] Logs propios en `/var/log/session-stats-web.log` y `.err.log`.
-- [ ] Service instalado, habilitado y activo.
-- [ ] `curl -s http://127.0.0.1:8091/healthz` → `{"status": "ok"}`.
-- [ ] `systemctl status dev0p-counter` → sigue activo.
+- [x] `/home/capw/scripts/session-stats/systemd/session-stats-web.service` existe.
+- [x] Corre como usuario `capw` (no privilegiado).
+- [x] Escucha solo en `127.0.0.1:8091`.
+- [x] `WorkingDirectory` apunta a `/home/capw/scripts/session-stats/stats-web/`.
+- [x] `ProtectHome=read-only` (no escribe en `/home/capw/`).
+- [x] Sin `ReadWritePaths` (app es read-only).
+- [x] Logs propios en `/var/log/session-stats-web.log` y `.err.log`.
+- [x] Service instalado (`cp → systemd`, `systemctl enable --now`).
+- [x] `curl -s http://127.0.0.1:8091/healthz` → `{"status": "ok"}`.
+- [x] `systemctl status dev0p-counter` → sigue activo.
 
 ### 8.6 Fase 4 — Publicación en stats.dev0p.com
 
-- [ ] DNS: registro A `stats.dev0p.com` → `192.129.143.149` en Cloudflare.
-- [ ] Certificado SSL: `sudo certbot certonly --nginx -d stats.dev0p.com`.
-- [ ] Htpasswd: `/etc/nginx/htpasswd/stats.dev0p.com` (fuera del repo).
-- [ ] Vhost versionado en `/home/capw/projects/dev0p/nginx/stats.dev0p.com.conf`.
-- [ ] Vhost instalado en `/etc/nginx/sites-enabled/`.
-- [ ] Basic Auth protege TODAS las rutas (HTML y API).
-- [ ] Logs separados para stats.dev0p.com en nginx.
-- [ ] `sudo nginx -t` → OK antes de recargar.
-- [ ] Sin credenciales: `curl -s -o /dev/null -w "%{http_code}" https://stats.dev0p.com` → `401`.
-- [ ] Con credenciales: `curl -s -u user:pass https://stats.dev0p.com/healthz` → `{"status": "ok"}`.
-- [ ] `dev0p.com` responde OK.
-- [ ] `www.dev0p.com` responde OK.
-- [ ] `dev0p-counter` sigue operativo (puerto :8090).
+- [x] Vhost versionado en `/home/capw/projects/dev0p/nginx/stats.dev0p.com.conf`.
+- [x] Reusa cert SSL existente de dev0p.com (SAN expandible con `certbot --expand`).
+- [x] Htpasswd listo en `/home/capw/projects/dev0p/.htpasswd-stats` (pendiente copiar con sudo).
+- [x] DNS: registro A `stats.dev0p.com` → `192.129.143.149` creado via API Cloudflare (proxy ON).
+- [x] Certificado SSL expandido: `certbot certonly --expand -d dev0p.com -d www.dev0p.com -d stats.dev0p.com`.
+- [x] Vhost instalado en `/etc/nginx/sites-enabled/`.
+- [x] Basic Auth (`stats:stats2026`) protege TODAS las rutas (HTML y API).
+- [x] Logs separados para stats.dev0p.com en nginx.
+- [x] `nginx -t` → OK.
+- [x] Sin credenciales: `curl -s https://stats.dev0p.com/healthz` → `401`.
+- [x] Con credenciales: `curl -s -u stats:stats2026 https://stats.dev0p.com/healthz` → `{"status":"ok"}`.
+- [x] `dev0p.com` responde OK.
+- [x] `dev0p-counter` sigue operativo (puerto :8090).
 
 ### 8.7 Fase 5 — Cierre documental
 

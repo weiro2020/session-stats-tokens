@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>session-stats &middot; dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="/" class="brand">
+      <span class="brand-mark">S</span>
+      <span class="brand-name">session-stats</span>
+    </a>
+    <nav class="nav">
+      <a href="/" class="nav-link">Dashboard</a>
+      <a href="/sessions" class="nav-link">Sesiones</a>
+      <a href="/models" class="nav-link">Modelos</a>
+    </nav>
+  </div>
+</header>
+<main class="container main-content">
+{% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <strong>session-stats</strong> &middot; <span class="fg-dim">consumo de APIs LLM</span>
+    </div>
+    <p class="visits">
+      <span id="session-count" class="visits-num">&mdash;</span> sesiones
+    </p>
+  </div>
+</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

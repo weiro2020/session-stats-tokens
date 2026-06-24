@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-inner">
+    <p class="kicker">Consumo de APIs LLM</p>
+    <h1 class="hero-title">session-stats</h1>
+    <p class="lede">Métricas globales de uso, costos y modelos desde todas las fuentes: Hermes, OpenCode, Codex, Kilocode y registros manuales.</p>
+  </div>
+</section>
+
+<div class="stats-grid">
+  <div class="stat-card" id="card-sessions">
+    <div class="stat-label">Sesiones totales</div>
+    <div class="stat-value" data-stat="sessions">&mdash;</div>
+  </div>
+  <div class="stat-card" id="card-requests">
+    <div class="stat-label">Requests</div>
+    <div class="stat-value" data-stat="requests">&mdash;</div>
+  </div>
+  <div class="stat-card accent" id="card-cost">
+    <div class="stat-label">Costo total</div>
+    <div class="stat-value" data-stat="cost">&mdash;</div>
+  </div>
+  <div class="stat-card" id="card-cost-30d">
+    <div class="stat-label">Costo últimos 30d</div>
+    <div class="stat-value" data-stat="cost_30d">&mdash;</div>
+  </div>
+  <div class="stat-card" id="card-cost-7d">
+    <div class="stat-label">Costo últimos 7d</div>
+    <div class="stat-value" data-stat="cost_7d">&mdash;</div>
+  </div>
+  <div class="stat-card" id="card-input">
+    <div class="stat-label">Tokens input</div>
+    <div class="stat-value" data-stat="input">&mdash;</div>
+  </div>
+  <div class="stat-card" id="card-output">
+    <div class="stat-label">Tokens output</div>
+    <div class="stat-value" data-stat="output">&mdash;</div>
+  </div>
+  <div class="stat-card" id="card-cache">
+    <div class="stat-label">Tokens cache</div>
+    <div class="stat-value" data-stat="cache">&mdash;</div>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-header">
+    <h2 class="section-title">Costo en el tiempo</h2>
+    <div class="chart-controls">
+      <select id="range-select" class="select-control">
+        <option value="7d">7 días</option>
+        <option value="30d" selected>30 días</option>
+        <option value="90d">90 días</option>
+        <option value="all">Todo</option>
+      </select>
+      <select id="bucket-select" class="select-control">
+        <option value="day" selected>Por día</option>
+        <option value="week">Por semana</option>
+        <option value="month">Por mes</option>
+      </select>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="cost-chart"></canvas>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-header">
+    <h2 class="section-title">Top modelos por costo</h2>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="models-chart"></canvas>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-header">
+    <h2 class="section-title">Distribución por fuente</h2>
+  </div>
+  <div class="chart-wrap chart-half">
+    <canvas id="sources-chart"></canvas>
+  </div>
+</div>
+{% endblock %}

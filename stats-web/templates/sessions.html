@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head">
+  <h1 class="hero-title" style="font-size:28px;">Sesiones</h1>
+  <p class="lede" style="margin:0;">Listado paginado de todas las sesiones registradas.</p>
+</section>
+
+<div class="table-controls">
+  <select id="source-filter" class="select-control">
+    <option value="">Todas las fuentes</option>
+    <option value="opencode">OpenCode</option>
+    <option value="hermes">Hermes</option>
+    <option value="codex">Codex</option>
+    <option value="kilocode">Kilocode</option>
+    <option value="unknown">Unknown</option>
+  </select>
+  <span class="page-info" id="page-info">Página <strong id="page-num">1</strong> &middot; <span id="total-sessions-label">0</span> sesiones</span>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Fecha</th>
+        <th>Fuente</th>
+        <th class="num">Requests</th>
+        <th class="num">Input</th>
+        <th class="num">Output</th>
+        <th class="num">Cache</th>
+        <th class="num">Costo</th>
+      </tr>
+    </thead>
+    <tbody id="sessions-tbody">
+      <tr><td colspan="8" class="loading-row">Cargando...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <button class="page-btn" id="prev-page" disabled>&larr; Anterior</button>
+  <button class="page-btn" id="next-page">Siguiente &rarr;</button>
+</div>
+{% endblock %}
