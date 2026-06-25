@@ -164,7 +164,7 @@ def api_timeseries(
         """, ([date_from] if date_from else [])).fetchall()
     elif bucket == "week":
         rows = conn.execute("""
-            SELECT date(date, 'weekday 1') as period,
+            SELECT date(date, 'weekday 0', '-6 days') as period,
                    COUNT(*) as sessions,
                    COALESCE(SUM(requests),0) as requests,
                    COALESCE(SUM(input_tokens),0) as input_tokens,
@@ -189,6 +189,52 @@ def api_timeseries(
             GROUP BY period ORDER BY period ASC
         """, ([date_from] if date_from else [])).fetchall()
 
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/timeseries/sources")
+def api_timeseries_sources(
+    range: str = Query("all", regex=r"^(7d|30d|90d|all)$"),
+    bucket: str = Query("week", regex=r"^(day|week|month)$"),
+):
+    date_from = None if range == "all" else _days_ago(int(range.replace("d", "")))
+    date_filter = f" AND date >= '{date_from}'" if date_from else ""
+
+    conn = _db()
+    if bucket == "month":
+        rows = conn.execute(f"""
+            SELECT strftime('%Y-%m-01', date) as period,
+                   source,
+                   COUNT(*) as sessions,
+                   COALESCE(SUM(requests),0) as requests
+            FROM sessions
+            WHERE source NOT IN ('legacy'){date_filter}
+            GROUP BY period, source
+            ORDER BY period ASC, sessions DESC
+        """).fetchall()
+    elif bucket == "week":
+        rows = conn.execute(f"""
+            SELECT date(date, 'weekday 0', '-6 days') as period,
+                   source,
+                   COUNT(*) as sessions,
+                   COALESCE(SUM(requests),0) as requests
+            FROM sessions
+            WHERE source NOT IN ('legacy'){date_filter}
+            GROUP BY period, source
+            ORDER BY period ASC, sessions DESC
+        """).fetchall()
+    else:
+        rows = conn.execute(f"""
+            SELECT DATE(date) as period,
+                   source,
+                   COUNT(*) as sessions,
+                   COALESCE(SUM(requests),0) as requests
+            FROM sessions
+            WHERE source NOT IN ('legacy'){date_filter}
+            GROUP BY period, source
+            ORDER BY period ASC, sessions DESC
+        """).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
@@ -363,7 +409,7 @@ def api_top_models():
     date_from = first_monday.isoformat()
 
     weekly_rows = conn.execute("""
-        SELECT date(date(s.date), 'weekday 1') as week_start, mu.model,
+        SELECT date(date(s.date), 'weekday 0', '-6 days') as week_start, mu.model,
                COALESCE(SUM(mu.input_tokens),0) + COALESCE(SUM(mu.output_tokens),0) + COALESCE(SUM(mu.cache_tokens),0) as tokens
         FROM model_usage mu
         JOIN sessions s ON s.id = mu.session_id

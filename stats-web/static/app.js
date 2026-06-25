@@ -41,6 +41,7 @@ if (document.querySelector('.stats-grid')) {
       document.querySelector('[data-stat="total-tokens"]').textContent = fmt(totalTokens);
       document.querySelector('[data-stat="total-sessions"]').textContent = fmt(d.total_sessions);
       document.querySelector('[data-stat="cache-ratio"]').textContent = fmtPct(d.cache_ratio);
+      document.querySelector('[data-stat="total-requests"]').textContent = fmt(d.total_requests);
       var sc = document.getElementById('session-count');
       if (sc) sc.textContent = fmt(d.total_sessions);
       var upd = document.getElementById('updated-badge');
@@ -295,6 +296,18 @@ if (document.querySelector('.stats-grid')) {
   var activityCanvas = document.getElementById('activity-chart');
   var activityMetric = 'tokens';
   var activityChart = null;
+  var sourcesLegend = document.getElementById('sources-legend');
+  var sourcesLastData = null;
+
+  var SOURCE_COLORS = {
+    hermes: '#ff8904',
+    opencode: '#3b82f6',
+    codex: '#22c55e',
+    cursor: '#a855f7',
+    kilocode: '#64748b',
+    legacy: '#94a3b8',
+    unknown: '#ef4444'
+  };
 
   function buildActivityDataset(rows, metric) {
     return rows.map(function(r) {
@@ -310,8 +323,111 @@ if (document.querySelector('.stats-grid')) {
     return fmt(value);
   }
 
+  function buildSourcesDatasets(rows) {
+    // rows: [{period, source, sessions, requests}, ...]
+    var periods = [];
+    var sourceMap = {};
+    rows.forEach(function(r) {
+      if (periods.indexOf(r.period) === -1) periods.push(r.period);
+      if (!sourceMap[r.source]) sourceMap[r.source] = {};
+      sourceMap[r.source][r.period] = Number(r.sessions || 0);
+    });
+    // Sort sources by total sessions descending
+    var sortedSources = Object.keys(sourceMap).sort(function(a, b) {
+      var totalA = Object.values(sourceMap[a]).reduce(function(s, v) { return s + v; }, 0);
+      var totalB = Object.values(sourceMap[b]).reduce(function(s, v) { return s + v; }, 0);
+      return totalB - totalA;
+    });
+    var datasets = [];
+    sortedSources.forEach(function(source) {
+      var data = periods.map(function(p) { return sourceMap[source][p] || 0; });
+      datasets.push({
+        label: source.charAt(0).toUpperCase() + source.slice(1),
+        data: data,
+        backgroundColor: SOURCE_COLORS[source] || '#808080',
+        borderWidth: 0,
+        barPercentage: 0.9,
+        categoryPercentage: 0.96
+      });
+    });
+    return { periods: periods, datasets: datasets };
+  }
+
+  function renderSourcesChart(rows) {
+    if (!activityCanvas) return;
+    sourcesLastData = rows;
+    var built = buildSourcesDatasets(rows);
+    var labels = built.periods.map(function(p) {
+      var date = new Date(p + 'T00:00:00');
+      var months = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+      return String(date.getDate()).padStart(2, '0') + '/' + months[date.getMonth()];
+    });
+
+    if (activityChart) activityChart.destroy();
+    activityChart = new Chart(activityCanvas.getContext('2d'), {
+      type: 'bar',
+      data: { labels: labels, datasets: built.datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            callbacks: {
+              label: function(ctx) {
+                return ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + ' sesiones';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { color: '#808080', maxTicksLimit: 8 } },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(255,255,255,0.08)' },
+            ticks: { color: '#808080', callback: function(v) { return fmt(v); } }
+          }
+        }
+      }
+    });
+
+    // Build color legend
+    if (sourcesLegend) {
+      sourcesLegend.style.display = 'flex';
+      sourcesLegend.style.flexWrap = 'wrap';
+      sourcesLegend.style.gap = '10px';
+      sourcesLegend.style.justifyContent = 'center';
+      sourcesLegend.innerHTML = '';
+      built.datasets.forEach(function(ds) {
+        var item = document.createElement('span');
+        item.style.display = 'inline-flex';
+        item.style.alignItems = 'center';
+        item.style.gap = '5px';
+        item.style.fontSize = '11px';
+        item.style.fontFamily = 'var(--mono)';
+        item.style.color = '#aaa';
+        var dot = document.createElement('span');
+        dot.style.width = '10px';
+        dot.style.height = '10px';
+        dot.style.borderRadius = '2px';
+        dot.style.background = ds.backgroundColor;
+        item.appendChild(dot);
+        item.appendChild(document.createTextNode(ds.label));
+        sourcesLegend.appendChild(item);
+      });
+    }
+  }
+
   function renderActivity(rows) {
     if (!activityCanvas) return;
+    // Si es sources mode, redirigir a renderSourcesChart
+    if (activityMetric === 'sources') {
+      if (sourcesLastData) { renderSourcesChart(sourcesLastData); }
+      return;
+    }
+
+    sourcesLegend.style.display = 'none';
     var labels = rows.map(function(r) {
       var date = new Date(r.period + 'T00:00:00');
       var months = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
@@ -371,35 +487,51 @@ if (document.querySelector('.stats-grid')) {
     });
   }
 
-  fetch('/api/timeseries?range=all&bucket=week')
-    .then(function(r) { return r.json(); })
-    .then(function(rows) {
-      var last52 = rows.slice(-52);
-      function getPeak(metric) {
-        var values = buildActivityDataset(last52, metric);
-        var peak = 0;
-        values.forEach(function(v) { if (v > peak) peak = v; });
-        return peak;
-      }
-      document.getElementById('activity-peak-tokens').textContent = fmt(getPeak('tokens'));
-      document.getElementById('activity-peak-cost').textContent = fmtCost(getPeak('cost'));
-      document.getElementById('activity-peak-sessions').textContent = fmt(getPeak('sessions'));
-      renderActivity(last52);
+  // Fetch timeseries + sources in parallel
+  var timeseriesPromise = fetch('/api/timeseries?range=all&bucket=week').then(function(r) { return r.json(); });
+  var sourcesPromise = fetch('/api/timeseries/sources?range=all&bucket=week').then(function(r) { return r.json(); });
 
-      var tabs = document.querySelectorAll('.activity-tab');
-      tabs.forEach(function(tab) {
-        tab.addEventListener('click', function() {
-          activityMetric = tab.getAttribute('data-metric');
-          tabs.forEach(function(t) {
-            t.removeAttribute('data-active');
-            t.setAttribute('aria-selected', 'false');
-          });
-          tab.setAttribute('data-active', 'true');
-          tab.setAttribute('aria-selected', 'true');
-          renderActivity(last52);
+  Promise.all([timeseriesPromise, sourcesPromise]).then(function(results) {
+    var rows = results[0];
+    var sourceRows = results[1];
+
+    var last52 = rows.slice(-52);
+    // Also slice sources to last 52 weeks
+    var periods52 = last52.map(function(r) { return r.period; });
+    var last52Sources = sourceRows.filter(function(r) { return periods52.indexOf(r.period) !== -1; });
+    sourcesLastData = last52Sources;
+
+    function getPeak(metric) {
+      if (metric === 'sources') return '';
+      var values = buildActivityDataset(last52, metric);
+      var peak = 0;
+      values.forEach(function(v) { if (v > peak) peak = v; });
+      return peak;
+    }
+    document.getElementById('activity-peak-tokens').textContent = fmt(getPeak('tokens'));
+    document.getElementById('activity-peak-cost').textContent = fmtCost(getPeak('cost'));
+    document.getElementById('activity-peak-sessions').textContent = fmt(getPeak('sessions'));
+    renderActivity(last52);
+
+    var tabs = document.querySelectorAll('.activity-tab');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        activityMetric = tab.getAttribute('data-metric');
+        tabs.forEach(function(t) {
+          t.removeAttribute('data-active');
+          t.setAttribute('aria-selected', 'false');
         });
+        tab.setAttribute('data-active', 'true');
+        tab.setAttribute('aria-selected', 'true');
+
+        if (activityMetric === 'sources') {
+          renderSourcesChart(sourcesLastData);
+        } else {
+          renderActivity(last52);
+        }
       });
     });
+  });
 
   // --- Token Cost ---
   var tokenCostData = null;

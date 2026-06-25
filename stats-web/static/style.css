@@ -521,6 +521,8 @@ a:hover { text-decoration: underline; }
 .chart-half { max-width: 420px; margin: 0 auto; }
 .activity-chart-wrap {
   min-height: 340px;
+  max-height: 460px;
+  overflow-y: auto;
   border: 1px solid var(--stats-line);
   background: var(--stats-layer);
   padding: 16px;

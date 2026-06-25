@@ -4,7 +4,7 @@
 <section class="hero">
   <div class="hero-inner">
     <h1 class="hero-title">Métricas de consumo LLM</h1>
-    <p class="lede">Uso, costos y modelos desde Hermes, OpenCode, Codex, Kilocode y registros manuales.</p>
+    <p class="lede">Métricas de uso de modelos y costos.</p>
   </div>
 </section>
 
@@ -25,10 +25,13 @@
     <div class="stat-label">Cache Ratio</div>
     <div class="stat-value" data-stat="cache-ratio">&mdash;</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Requests</div>
+    <div class="stat-value" data-stat="total-requests">&mdash;</div>
+  </div>
 </div>
 
 <section data-section="top-models" id="top-models" class="stats-section section-block">
-  <h2 data-slot="top-models-title" class="section-title"><strong>Top modelos.</strong> Uso de modelos en OpenCode, Hermes y Codex.</h2>
   <div data-component="top-models-chart"
        class="top-models-chart"
        role="img"
@@ -60,9 +63,11 @@
     <button type="button" class="activity-tab" data-metric="tokens" data-active="true" role="tab" aria-selected="true">Tokens</button>
     <button type="button" class="activity-tab" data-metric="cost" role="tab" aria-selected="false">Costo</button>
     <button type="button" class="activity-tab" data-metric="sessions" role="tab" aria-selected="false">Sesiones</button>
+    <button type="button" class="activity-tab" data-metric="sources" role="tab" aria-selected="false">Fuentes</button>
   </div>
   <div class="chart-wrap activity-chart-wrap">
     <canvas id="activity-chart" aria-label="Actividad temporal semanal" role="img"></canvas>
+    <div id="sources-legend" class="sources-legend" style="display:none; margin-top:12px;"></div>
   </div>
 </div>
 

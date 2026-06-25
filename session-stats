@@ -163,14 +163,20 @@ def get_current_session():
     for sess in get_hermes_sessions():
         if has_real_usage_hermes(sess["id"]):
             ts_ms = int(sess["started_at"] * 1000) if sess.get("started_at") else 0
-            candidates.append(("hermes", sess["id"], ts_ms))
+            candidates.append(("hermes", sess["id"], ts_ms, sess.get("ended_at")))
 
     if not candidates:
         return None
 
+    # Priorizar sesión activa de Hermes (sin ended_at) sobre cualquier otra
+    hermes_activa = [c for c in candidates if c[0] == "hermes" and not c[3]]
+    if hermes_activa:
+        best = max(hermes_activa, key=lambda x: x[2])
+        return best[:3]
+
     # Return the one with the highest timestamp
     best = max(candidates, key=lambda x: x[2])
-    return best
+    return best[:3]
 
 def get_session_stats_json(session_path):
     """Extracts statistics from an OpenCode JSON session."""

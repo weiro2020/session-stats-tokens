@@ -578,6 +578,7 @@ def get_hermes_sessions():
             cache_write = row[5] or 0
             reasoning = row[6] or 0
             started_at = row[10]
+            ended_at = row[9]
             title = row[11] or ""
 
             # Contar requests
@@ -616,6 +617,7 @@ def get_hermes_sessions():
                 "date": date_str,
                 "title": title,
                 "started_at": started_at,
+                "ended_at": ended_at,
                 "by_model": by_model,
             })
         conn.close()
@@ -1212,7 +1214,7 @@ def _detect_source(session_id):
         return "hermes"
     if session_id.startswith("cursor_"):
         return "cursor"
-    if session_id.startswith("opencode_"):
+    if session_id.startswith("opencode_") or session_id.startswith("ses_"):
         return "opencode"
     # Sesiones Hermes: formato YYYYMMDD_HHMMSS_*
     if len(session_id) > 15 and session_id[8] == '_' and session_id[15] == '_':
