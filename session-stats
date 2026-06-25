@@ -319,9 +319,7 @@ def update_history(session_id, requests, input_tokens, output_tokens, cost, by_m
     ts = _parse_timestamp(date) if date else int(datetime.datetime.now().timestamp())
     cache_tokens = sum(m.get("cache", 0) for m in by_model.values())
     reasoning_tokens = sum(m.get("reasoning", 0) for m in by_model.values())
-    source = session_id.split("_")[0] if "_" in session_id else "unknown"
-    if source not in ("codex", "kilocode", "kilo", "hermes", "opencode", "cursor"):
-        source = "unknown"
+    source = _detect_source(session_id)
     try:
         save_session(session_id, source, date or datetime.datetime.now().isoformat(),
                      ts, requests, input_tokens, output_tokens,

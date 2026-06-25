@@ -20,3 +20,5 @@ Thumbs.db
 model_backups/
 __pycache__/
 db_backups/
+*.db-shm
+*.db-wal

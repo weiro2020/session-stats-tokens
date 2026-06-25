@@ -1214,6 +1214,13 @@ def _detect_source(session_id):
         return "cursor"
     if session_id.startswith("opencode_"):
         return "opencode"
+    # Sesiones Hermes: formato YYYYMMDD_HHMMSS_*
+    if len(session_id) > 15 and session_id[8] == '_' and session_id[15] == '_':
+        try:
+            int(session_id[:8])
+            return "hermes"
+        except ValueError:
+            pass
     return "unknown"
 
 
