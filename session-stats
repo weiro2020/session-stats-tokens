@@ -168,11 +168,12 @@ def get_current_session():
     if not candidates:
         return None
 
-    # Priorizar sesión activa de Hermes (sin ended_at) sobre cualquier otra
-    hermes_activa = [c for c in candidates if c[0] == "hermes" and not c[3]]
-    if hermes_activa:
-        best = max(hermes_activa, key=lambda x: x[2])
-        return best[:3]
+    # Solo priorizar Hermes si la sesion MAS RECIENTE esta abierta (sin ended_at)
+    hermes_candidates = [c for c in candidates if c[0] == "hermes"]
+    if hermes_candidates:
+        latest = max(hermes_candidates, key=lambda x: x[2])
+        if not latest[3]:
+            return latest[:3]
 
     # Return the one with the highest timestamp
     best = max(candidates, key=lambda x: x[2])
@@ -354,8 +355,9 @@ def capture_all_sessions():
 
     def _save_if_new(sid, entry):
         nonlocal new_count
-        if sid in existing_keys or not entry:
+        if not entry:
             return
+        was_new = sid not in existing_keys
         existing_keys.add(sid)
         by_model = entry.get("by_model", {})
         if not by_model:
@@ -374,14 +376,15 @@ def capture_all_sessions():
                 entry.get("cost", 0.0),
                 by_model, DB_PATH
             )
-            new_count += 1
+            if was_new:
+                new_count += 1
         except Exception:
             pass
 
     # --- Kilo ---
     for sess in get_kilo_sessions():
         sid = sess["id"]
-        if sid in existing_keys or not has_real_usage_sqlite(sid):
+        if not has_real_usage_sqlite(sid):
             continue
         stats = get_session_stats_sqlite(sid)
         if stats["by_model"]:
@@ -392,7 +395,7 @@ def capture_all_sessions():
         if sess["source"] != "sqlite":
             continue
         sid = sess["id"]
-        if sid in existing_keys or not has_real_usage_sqlite(sid, OPENCODE_DB_PATH):
+        if not has_real_usage_sqlite(sid, OPENCODE_DB_PATH):
             continue
         stats = get_session_stats_sqlite(sid, OPENCODE_DB_PATH)
         if stats["by_model"]:
