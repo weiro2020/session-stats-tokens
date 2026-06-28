@@ -148,7 +148,8 @@ if (document.querySelector('.stats-grid')) {
 
   function buildBar(barEl, week, weekIndex, maxTotal, totalWeeks) {
     var total = 0;
-    (week.segments || []).forEach(function(s) { total += s.value; });
+    var totalCost = 0;
+    (week.segments || []).forEach(function(s) { total += s.value; totalCost += s.cost || 0; });
 
     barEl.setAttribute('data-slot', 'top-models-bar');
     barEl.className = 'top-models-bar';
@@ -191,7 +192,7 @@ if (document.querySelector('.stats-grid')) {
     tip.appendChild(strong);
 
     var sub = document.createElement('span');
-    sub.textContent = fmtTokens(total) + ' total';
+    sub.textContent = fmtTokens(total) + ' total  ·  ' + fmtCost(totalCost);
     tip.appendChild(sub);
 
     var divider = document.createElement('div');
@@ -211,7 +212,7 @@ if (document.querySelector('.stats-grid')) {
       label.appendChild(nameSpan);
       p.appendChild(label);
       var b = document.createElement('b');
-      b.textContent = fmtTokens(s.value);
+      b.textContent = fmtTokens(s.value) + '  ' + fmtCost(s.cost);
       p.appendChild(b);
       tip.appendChild(p);
     });
@@ -249,6 +250,11 @@ if (document.querySelector('.stats-grid')) {
     body.appendChild(tokens);
 
     card.appendChild(body);
+
+    var cost = document.createElement('span');
+    cost.className = 'leader-cost';
+    cost.textContent = fmtCost(entry.cost);
+    card.appendChild(cost);
 
     var pct = document.createElement('span');
     pct.className = 'leader-percent';

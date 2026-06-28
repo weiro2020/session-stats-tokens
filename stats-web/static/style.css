@@ -867,6 +867,15 @@ td .model-name { color: var(--stats-text); font-weight: 500; }
   font-variant-numeric: tabular-nums;
 }
 
+.leader-cost {
+  flex: 0 0 auto;
+  color: var(--stats-faint);
+  font-weight: 500;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 @media (max-width: 768px) {
   .top-models-chart { height: 320px; }
   .leaderboard { grid-template-columns: 1fr; }

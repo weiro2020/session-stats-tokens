@@ -444,7 +444,8 @@ def api_top_models():
     # 2) Leaderboard all-time (top 20 para las tarjetas)
     all_time_rows = conn.execute("""
         SELECT mu.model,
-               COALESCE(SUM(mu.input_tokens),0) + COALESCE(SUM(mu.output_tokens),0) + COALESCE(SUM(mu.cache_tokens),0) as total_tokens
+               COALESCE(SUM(mu.input_tokens),0) + COALESCE(SUM(mu.output_tokens),0) + COALESCE(SUM(mu.cache_tokens),0) as total_tokens,
+               COALESCE(SUM(mu.cost),0) as total_cost
         FROM model_usage mu
         JOIN sessions s ON s.id = mu.session_id
         WHERE s.source != 'legacy'
@@ -470,7 +471,8 @@ def api_top_models():
 
     weekly_rows = conn.execute("""
         SELECT date(date(s.date), 'weekday 0', '-6 days') as week_start, mu.model,
-               COALESCE(SUM(mu.input_tokens),0) + COALESCE(SUM(mu.output_tokens),0) + COALESCE(SUM(mu.cache_tokens),0) as tokens
+               COALESCE(SUM(mu.input_tokens),0) + COALESCE(SUM(mu.output_tokens),0) + COALESCE(SUM(mu.cache_tokens),0) as tokens,
+               COALESCE(SUM(mu.cost),0) as cost
         FROM model_usage mu
         JOIN sessions s ON s.id = mu.session_id
         WHERE s.source != 'legacy' AND s.date >= ?
@@ -480,10 +482,13 @@ def api_top_models():
 
     conn.close()
 
-    # 5) Agrupar por semana → modelo
-    weekly_by_model: dict[str, dict[str, int]] = {}
+    # 5) Agrupar por semana → modelo (tokens + cost)
+    weekly_by_model: dict[str, dict[str, dict]] = {}
     for r2 in weekly_rows:
-        weekly_by_model.setdefault(r2["week_start"], {})[r2["model"]] = r2["tokens"]
+        week_data = weekly_by_model.setdefault(r2["week_start"], {})
+        model_data = week_data.setdefault(r2["model"], {"tokens": 0, "cost": 0})
+        model_data["tokens"] += r2["tokens"]
+        model_data["cost"] += r2["cost"]
 
     # 6) Generar las 52 semanas (incluyendo vacías)
     week_starts = [(current_monday - datetime.timedelta(weeks=i)).isoformat()
@@ -495,19 +500,20 @@ def api_top_models():
         week_data = weekly_by_model.get(ws, {})
         segments = []
         for m in top_models:
-            v = week_data.get(m, 0)
-            if v > 0:
-                segments.append({"model": m, "value": v})
-        other_val = sum(v for m, v in week_data.items() if m not in top_set)
-        if other_val > 0:
-            segments.append({"model": "Other", "value": other_val})
+            md = week_data.get(m)
+            if md and md["tokens"] > 0:
+                segments.append({"model": m, "value": md["tokens"], "cost": round(md["cost"], 4)})
+        other_tokens = sum(md["tokens"] for m, md in week_data.items() if m not in top_set)
+        other_cost = sum(md["cost"] for m, md in week_data.items() if m not in top_set)
+        if other_tokens > 0:
+            segments.append({"model": "Other", "value": other_tokens, "cost": round(other_cost, 4)})
         points.append({
             "date": _fmt_date_short(ws),
             "_iso": ws,
             "segments": segments,
         })
 
-    # 8) Leaderboard all-time con %
+    # 8) Leaderboard all-time con % + cost
     leaderboard = []
     for i, r2 in enumerate(all_time_rows):
         author = _author(r2["model"])
@@ -516,6 +522,7 @@ def api_top_models():
             "model": r2["model"],
             "author": author,
             "tokens": tokens,
+            "cost": round(r2["total_cost"], 2),
             "percent": round(tokens / grand_total * 100, 2),
             "rank": i + 1,
         })
