@@ -565,7 +565,7 @@ def get_hermes_sessions():
                    cache_read_tokens, cache_write_tokens, reasoning_tokens,
                    estimated_cost_usd, actual_cost_usd, ended_at, started_at, title
             FROM sessions
-            WHERE source IN ('cli', 'telegram') AND input_tokens > 0
+            WHERE source IN ('cli', 'telegram', 'subagent') AND input_tokens > 0
             ORDER BY started_at DESC
         """)
         sessions = []
