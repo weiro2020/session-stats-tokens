@@ -645,7 +645,7 @@ server {
 - Logs del servicio sin errores repetidos.
 - Dashboard usable desde mobile (probar).
 
-**Sincronización VPS** (si corresponde): Si se tocó nginx de `dev0p`, actualizar `/home/capw/docsvps/` y pushear repo `weiro2020/docsvps`.
+**Sincronización VPS** (si corresponde): Si se tocó nginx de `dev0p`, actualizar `/home/capw/docsvps/` y pushear repo `devop-arg/docsvps`.
 
 **Criterio de salida**:
 - `ANALISIS.md` refleja estado final.
@@ -948,7 +948,7 @@ Este checklist debe completarse en orden de fases. No saltear validaciones porqu
 - [x] Logs del servicio sin errores repetidos (0 en journalctl -p err).
 - [x] Dashboard usable desde mobile (responsive: cards 2→1 col, charts apilados, scroll horizontal).
 - [x] Si se tocó nginx/systemd de `dev0p`, documentar en `/home/capw/docsvps/`.
-- [x] Si se tocó `/home/capw/docsvps/`, sincronizar y pushear `weiro2020/docsvps`.
+- [x] Si se tocó `/home/capw/docsvps/`, sincronizar y pushear `devop-arg/docsvps`.
 
 ### 8.8 Fase 6 (Póst-MVP) — Plugins de proveedores
 
