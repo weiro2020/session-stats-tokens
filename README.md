@@ -20,7 +20,7 @@ Track token usage and estimated costs across Kilo, OpenCode, Codex, and Hermes s
 ## Installation
 
 ```bash
-git clone https://github.com/weiro2020/session-stats-tokens.git
+git clone https://github.com/devop-arg/session-stats-tokens.git
 cd session-stats-tokens
 chmod +x session-stats session-stats-history session-stats-period
 
@@ -73,8 +73,8 @@ Este proyecto mantiene **dos remotos** con contenido diferente:
 
 | Remote | URL | Branch | Contenido |
 |--------|-----|--------|-----------|
-| `private` | `github.com:weiro2020/session-stats-tokens-private.git` | `main` | **Canónico**: scripts + datos de sesión (JSON, DB, backups) |
-| `origin` | `github.com:weiro2020/session-stats-tokens.git` (público) | `public` | **Sanitizado**: solo scripts, sin datos de usuario |
+| `private` | `github.com:devop-arg/session-stats-tokens-private.git` | `main` | **Canónico**: scripts + datos de sesión (JSON, DB, backups) |
+| `origin` | `github.com:devop-arg/session-stats-tokens.git` (público) | `public` | **Sanitizado**: solo scripts, sin datos de usuario |
 
 ### Reglas
 
